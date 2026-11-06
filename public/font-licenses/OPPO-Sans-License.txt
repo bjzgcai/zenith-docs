@@ -1,0 +1,18 @@
+OPPO Sans 4.0 — 许可说明
+Copyright (c) OPPO 广东移动通信有限公司（OPPO Guangdong Mobile Communications Co., Ltd.）All rights reserved.
+
+OPPO Sans 由 OPPO 发布并免费授权全社会使用（包括商用）。使用本字体须遵守 OPPO 官方的
+授权条款（以下为官方发布说明的要点整理，以 OPPO 官方最新条款为准）：
+
+1. 允许个人或企业免费使用，包括商业用途；
+2. 不得对字体进行改编或二次开发；
+3. 不得对外售卖字体；
+4. 不得向他方提供其他下载渠道；
+5. 不得用于违法用途。
+
+本仓库内 `frontend/public/fonts/oppo-sans-4.0.woff2` 为 OPPO Sans 4.0 可变字体（wght 100–700），
+由官方发布的 TTF 转换为 WOFF2 格式（未对字形做任何修改），仅供 Zenith 平台自托管使用。
+
+官方来源：
+- ColorOS 官网（字体发布与下载入口）: https://www.coloros.com/
+- OPPO 开放平台: https://open.oppomobile.com/
