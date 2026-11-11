@@ -212,7 +212,7 @@ zenith instances resize "$VENDOR" "$PROVIDER_ID" \
 | `listMyObjects` | `zenith storage objects` | `storage:read` | 已实现；按来源列出一页相对对象，支持游标。 |
 | `presignMyObjectUpload` | `zenith storage upload-presign` | `storage:write` | 已实现；需 --yes，将上传 URL 写入新建私有文件，不传文件。 |
 | `presignMyObjectDownload` | `zenith storage download-presign` | `storage:read` | 已实现；将下载 URL 写入新建私有文件，不传文件。 |
-| `issueMyBucketSts` | `zenith storage sts` | `storage:read` + `storage:write` + `storage:sts` | 已实现；整桶读写授权，需 --yes；凭据写入新建 0600 文件，不输出明文。 |
+| `issueMyBucketSts` | `zenith storage sts` | `storage:read` + `storage:write` + `storage:sts` | 已实现；所选桶或目录的读写授权，需 --yes；凭据写入新建 0600 文件，不输出明文。 |
 | `getDevMachineById` | `zenith instances get-by-id` | `instances:read` | 规划中；HTTP 可按 Platform ID 读取开发机。 |
 | `startDevMachineById` | `zenith instances start-by-id` | `instances:start` | 规划中；HTTP 可按 Platform ID 启动本人开发机。 |
 | `stopDevMachineById` | `zenith instances stop-by-id` | `instances:stop` | 规划中；HTTP 可按 Platform ID 停止本人开发机。 |
@@ -319,7 +319,9 @@ zenith storage sts --source-id "$SOURCE_ID" --duration-seconds 900 --credentials
 ```
 
 使用项目返回的稳定 ID，及该项目来源返回的 `id`；不要用名称或物理桶名替代。
-Token 需 `projects:read` 读取我的项目，`storage sts` 签发临时凭据还需三项存储范围和现有整桶读写授权。
+Token 需 `projects:read` 读取我的项目，`storage sts` 签发临时凭据还需三项存储范围和所选桶或目录的读写授权。对象 SDK 的 key 必须包含返回的 `path_prefix`，不能越过该目录。
 凭据仅写入新建 0600 文件，不进入终端输出。不要将文件内容粘贴到 AI 对话。
 默认有效期 900 秒，最长 43200 秒，Token 需额外预留 60 秒有效期；撤销 Token 不会
 立即撤销已签发云凭据。签发不会自动重试。
+
+API 4.5.0 增加天翼 ZOS 临时凭据接入，需管理员完成对应账号、角色和地域的实际权限验证后启用；未启用时返回 503，请勿自动重试或改用长期密钥。使用返回的真实 endpoint 和 region，旧桶保留原地域，新存储优先华北 2。项目桶登记不代表已挂载到开发机。
