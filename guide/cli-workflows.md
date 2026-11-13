@@ -74,12 +74,12 @@ API **2.11.0** 可先从 `capabilities` 的 `data.resource_zones` 读取资源�
 
 资源区编号沿用控制台公开命名。下表是资源区与 API 中 `vendor` 字段的兼容映射，只有 Platform 返回明确 provider 区域时才使用对应关系；不要从 `vendor` 值或存储路径猜测具体区域：
 
-| 控制台资源区 | API 中的 `vendor` 值 |
-| --- | --- |
-| 资源区 1–4 | `ctyun`；仅在实际 provider 区域可归属时使用对应编号 |
-| 资源区 5 | `volcengine` |
-| 资源区 6 | `lanqi` |
-| 资源区 10 | `baidu` |
+| 控制台资源区 | API 中的 `vendor` 值                                |
+| ------------ | --------------------------------------------------- |
+| 资源区 1–4   | `ctyun`；仅在实际 provider 区域可归属时使用对应编号 |
+| 资源区 5     | `volcengine`                                        |
+| 资源区 6     | `lanqi`                                             |
+| 资源区 10    | `baidu`                                             |
 
 `--resource-zone` 用于 `offerings admission` 的明确选择，并非所有命令通用的筛选参数：
 
@@ -90,22 +90,22 @@ zenith offerings admission "$OFFERING_ID" --workload instance \
 
 准入预检返回 `allowed`、`blocked` 或 `unknown`，并保留原因与 `retryable`；它不预留容量。有效编号仍可能没有匹配路由、在线工作节点或可用额度。收到 `blocked` / `unknown` 时不要擅自换区域或优先级。`standard` 和 `low_priority` 是当前有效优先级，旧值 `normal` 会被拒绝；还要核对所选规格在该资源区支持的执行类别。存储清单没有已核实的资源区信息，CLI 不会补造映射。
 
-读取规格的 `capabilities_by_resource_zone` 和开发机的 `capabilities` 时，保留 `worker_status`（`online` / `draining` / `offline`）与可空的操作标志。标志 `true` 只表示技术支持，`false` 表示不支持，`null` 或缺失表示未知，均不授予权限或保证容量。规格只列出存在路由的资源区；某区缺少一种工作负载路由时，该类型创建标志为 `false`、执行类别为空数组。执行类别在工作节点离线时仍可能有值，不能用它推断在线。规格的 `resize` 也不证明已有开发机能改配到它。任务能力可通过个人 HTTP API 读取，CLI 任务读取命令仍在规划中。
+读取规格的 `capabilities_by_resource_zone` 和开发机的 `capabilities` 时，保留 `worker_status`（`online` / `draining` / `offline`）与可空的操作标志。标志 `true` 只表示技术支持，`false` 表示不支持，`null` 或缺失表示未知，均不授予权限或保证容量。规格只列出存在路由的资源区；某区缺少一种工作负载路由时，该类型创建标志为 `false`、执行类别为空数组。执行类别在工作节点离线时仍可能有值，不能用它推断在线。规格的 `resize` 也不证明已有开发机能改配到它。Use `jobs get` or `jobs get-by-id` to read the current task capabilities.
 
 准入结果的 `data.routes[].storage` 是存储配置预览：个人/公共可用标志和路径说明配置，`project_supported` 与路径模板只说明项目存储支持，不证明当前项目已有授权绑定。路径和 `storage_scope` 可能为 `null`，应保留未知；`mount_verified=false`、`preview_only=true`，`unchecked` 数组仍包含 `storage_mounts`。预检不创建文件、挂载或预留资源，有路径也不能证明实际挂载成功。字段说明见[个人 API 与 AI 接入](/reference/personal-api)。
 
 脚本使用 `--output json`，不要解析表格、品牌标志或进度文字。JSON 格式版本为 `schema_version: 1`：
 
-| `kind` | 应读取的字段 |
-| --- | --- |
-| `success` | `data` 中的查询结果 |
-| `operation` | `operation` 中的回执；开发机操作另看 `operation.verification` |
-| `error` | `error.code`、可选 `status` / `retry_after`，以及可能保留的 `operation` |
+| `kind`      | 应读取的字段                                                            |
+| ----------- | ----------------------------------------------------------------------- |
+| `success`   | `data` 中的查询结果                                                     |
+| `operation` | `operation` 中的回执；开发机操作另看 `operation.verification`           |
+| `error`     | `error.code`、可选 `status` / `retry_after`，以及可能保留的 `operation` |
 
 例如空存储列表是成功结果，不是权限失败：
 
 ```json
-{"schema_version":1,"kind":"success","data":{"disks":[]}}
+{ "schema_version": 1, "kind": "success", "data": { "disks": [] } }
 ```
 
 JSON 结果（包括错误）写入标准输出；同时检查进程退出码。退出 0 表示命令完成，仍须核对回执状态、准入结果和 `effect_verified`。退出 2 为语法错误或未实现，3 为认证失败，4 为权限不足，5 为冲突，6 为请求/网络/超时等错误，7 为待定或 `UNKNOWN`，130 为本地中断，1 为内部错误。不得仅因得到可解析 JSON 就判定成功。
@@ -147,90 +147,90 @@ zenith instances resize "$VENDOR" "$PROVIDER_ID" \
 
 最初的 25 项包含两项手动挂载操作；它们已经撤出个人 API，不能为了完成旧清单恢复 Token 权限。下面逐项列出其当前状态。已实现行的范围包含 CLI 前置读取与回执恢复所需的最小范围，`+` 表示都需要；有效 Token、当前账号角色、所有权、项目授权和准入检查仍必须满足。
 
-| operationId | CLI 命令 | Token 范围 | 效果 |
-| --- | --- | --- | --- |
-| `getCapabilities` | `zenith capabilities` | 无额外 scope（仍需 Token） | 读取身份、Token 范围、能力与契约版本；需有效 Token。 |
-| `getMyProfile` | `zenith whoami` | `profile:read` | 读取本人资料。 |
-| `getMyQuotaUsage` | `zenith quota show` | `profile:read` | 读取有效配额与用量，不增加额度。 |
-| `getMyCardHours` | `zenith card-hours show` | `profile:read` | 读取卡时及扣费来源，不是现金余额。 |
-| `listMyProjects` | `zenith projects list` | `projects:read` | 读取本人项目列表。 |
-| `getMyProject` | `zenith projects get` | `projects:read` | 按稳定项目 ID 读取详情。 |
-| `listComputeOfferings` | `zenith offerings list` | `catalog:read` | 读取平台管理员已分配规格，不预留容量。 |
-| `listDevMachines` | `zenith instances list` | `instances:read` | 读取本人或明确项目可见的开发机观测列表。 |
-| `getDevMachine` | `zenith instances get` | `instances:read` | 按厂商和 provider ID 读取开发机观测。 |
-| `startDevMachine` | `zenith instances start` | `instances:start` + `instances:read` + `operations:read` | 启动本人开发机，仍需通过准入及卡时检查。 |
-| `stopDevMachine` | `zenith instances stop` | `instances:stop` + `instances:read` + `operations:read` | 停止本人开发机，会中断工作负载。 |
-| `restartDevMachine` | `zenith instances restart` | `instances:restart` + `instances:read` + `operations:read` | 重启本人开发机，会中断工作负载。 |
-| `resizeDevMachine` | `zenith instances resize` | `instances:resize` + `instances:read` + `operations:read` + `catalog:read` | 变更为已分配规格，可能中断服务；不会自动增加停启步骤。 |
-| `getMyProjectStoragePaths` | `zenith projects storage-paths` | `storage:read` | 仅 typed HTTP API；CLI 命令尚未实现。 |
-| `setMyProjectStoragePath` | `zenith projects set-storage-path` | `storage:configure` | 仅 typed HTTP API；CLI 命令尚未实现。 |
-| `listMyMountDisks` | `zenith storage list` | `storage:read` | 读取已分配逻辑磁盘，不改变挂载或机器状态。 |
-| `attachStorageAndRestart` | 已撤出个人 API，无 CLI 命令 | `storage:mount` 已退役 | 仅平台管理员控制台可调整存储并重启；会中断进程。 |
-| `configureStoppedInstanceMounts` | 已撤出个人 API，无 CLI 命令 | `storage:mount` 已退役 | 仅平台管理员控制台可配置已停止开发机的挂载；提交后保持停机。 |
-| `getMySshAccess` | `zenith ssh info` | `ssh:read` | 读取本人的结构化 SSH 信息，不建立连接。 |
-| `listMyPublicKeys` | `zenith ssh keys list` | `ssh-keys:read` | 读取本人公钥元数据和指纹。 |
-| `registerMyPublicKey` | `zenith ssh keys import` | `ssh-keys:write` + `ssh-keys:read` | 核对已有指纹后登记本地公钥，不注入机器。 |
-| `getMyPublicKey` | `zenith ssh keys get` | `ssh-keys:read` | 读取一条本人公钥记录。 |
-| `deleteMyPublicKeyRegistration` | `zenith ssh keys remove` | `ssh-keys:write` | 删除平台公钥登记；已安装公钥和已有 SSH 会话保留。 |
-| `requestMyPublicKeyInjection` | `zenith ssh inject` | `ssh:inject` + `ssh-keys:read` | 请求异步补注入本人公钥；使用单独状态接口。 |
-| `getMyPublicKeyInjectionStatus` | `zenith ssh injection-status` | `ssh-keys:read` | 读取公钥注入状态，不再次请求注入。 |
-| `getMyOperation` | `zenith operations get` | `operations:read` | 读取本人操作回执，不创建操作。 |
-| `findMyOperationByKey` | `zenith operations recover` | `operations:read` | 用保存的 intent 或原键找回回执，不再次提交。 |
+| operationId                      | CLI 命令                           | Token 范围                                                                 | 效果                                                                                  |
+| -------------------------------- | ---------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `getCapabilities`                | `zenith capabilities`              | 无额外 scope（仍需 Token）                                                 | 读取身份、Token 范围、能力与契约版本；需有效 Token。                                  |
+| `getMyProfile`                   | `zenith whoami`                    | `profile:read`                                                             | 读取本人资料。                                                                        |
+| `getMyQuotaUsage`                | `zenith quota show`                | `profile:read`                                                             | 读取有效配额与用量，不增加额度。                                                      |
+| `getMyCardHours`                 | `zenith card-hours show`           | `profile:read`                                                             | 读取卡时及扣费来源，不是现金余额。                                                    |
+| `listMyProjects`                 | `zenith projects list`             | `projects:read`                                                            | 读取本人项目列表。                                                                    |
+| `getMyProject`                   | `zenith projects get`              | `projects:read`                                                            | 按稳定项目 ID 读取详情。                                                              |
+| `listComputeOfferings`           | `zenith offerings list`            | `catalog:read`                                                             | 读取平台管理员已分配规格，不预留容量。                                                |
+| `listDevMachines`                | `zenith instances list`            | `instances:read`                                                           | 读取本人或明确项目可见的开发机观测列表。                                              |
+| `getDevMachine`                  | `zenith instances get`             | `instances:read`                                                           | 按厂商和 provider ID 读取开发机观测。                                                 |
+| `startDevMachine`                | `zenith instances start`           | `instances:start` + `instances:read` + `operations:read`                   | 启动本人开发机，仍需通过准入及卡时检查。                                              |
+| `stopDevMachine`                 | `zenith instances stop`            | `instances:stop` + `instances:read` + `operations:read`                    | 停止本人开发机，会中断工作负载。                                                      |
+| `restartDevMachine`              | `zenith instances restart`         | `instances:restart` + `instances:read` + `operations:read`                 | 重启本人开发机，会中断工作负载。                                                      |
+| `resizeDevMachine`               | `zenith instances resize`          | `instances:resize` + `instances:read` + `operations:read` + `catalog:read` | 变更为已分配规格，可能中断服务；不会自动增加停启步骤。                                |
+| `getMyProjectStoragePaths`       | `zenith projects storage-paths`    | `storage:read`                                                             | Implemented; Uses the published personal API permissions and exact resource identity. |
+| `setMyProjectStoragePath`        | `zenith projects set-storage-path` | `storage:configure`                                                        | Implemented; Uses the published personal API permissions and exact resource identity. |
+| `listMyMountDisks`               | `zenith storage list`              | `storage:read`                                                             | 读取已分配逻辑磁盘，不改变挂载或机器状态。                                            |
+| `attachStorageAndRestart`        | 已撤出个人 API，无 CLI 命令        | `storage:mount` 已退役                                                     | 仅平台管理员控制台可调整存储并重启；会中断进程。                                      |
+| `configureStoppedInstanceMounts` | 已撤出个人 API，无 CLI 命令        | `storage:mount` 已退役                                                     | 仅平台管理员控制台可配置已停止开发机的挂载；提交后保持停机。                          |
+| `getMySshAccess`                 | `zenith ssh info`                  | `ssh:read`                                                                 | 读取本人的结构化 SSH 信息，不建立连接。                                               |
+| `listMyPublicKeys`               | `zenith ssh keys list`             | `ssh-keys:read`                                                            | 读取本人公钥元数据和指纹。                                                            |
+| `registerMyPublicKey`            | `zenith ssh keys import`           | `ssh-keys:write` + `ssh-keys:read`                                         | 核对已有指纹后登记本地公钥，不注入机器。                                              |
+| `getMyPublicKey`                 | `zenith ssh keys get`              | `ssh-keys:read`                                                            | 读取一条本人公钥记录。                                                                |
+| `deleteMyPublicKeyRegistration`  | `zenith ssh keys remove`           | `ssh-keys:write`                                                           | 删除平台公钥登记；已安装公钥和已有 SSH 会话保留。                                     |
+| `requestMyPublicKeyInjection`    | `zenith ssh inject`                | `ssh:inject` + `ssh-keys:read`                                             | 请求异步补注入本人公钥；使用单独状态接口。                                            |
+| `getMyPublicKeyInjectionStatus`  | `zenith ssh injection-status`      | `ssh-keys:read`                                                            | 读取公钥注入状态，不再次请求注入。                                                    |
+| `getMyOperation`                 | `zenith operations get`            | `operations:read`                                                          | 读取本人操作回执，不创建操作。                                                        |
+| `findMyOperationByKey`           | `zenith operations recover`        | `operations:read`                                                          | 用保存的 intent 或原键找回回执，不再次提交。                                          |
 
 `zenith operations wait` 复用回执读取，`zenith ssh connect` 复用 SSH 信息并启动本地 OpenSSH，均不增加一个 API operation。
 
-### 后续增加的 42 项
+### Current personal API coverage
 
-当前 API **3.18.0** 的认证操作总数为 **65 = 25 − 2 + 42**，其中 **32 项已有 CLI 实现，33 项规划中**。下表逐项区分后续扩展；规划中行的范围仅说明 HTTP 契约，CLI 返回 `NOT_IMPLEMENTED` 且不发送请求。生成的 HTTP 客户端支持某接口不等于 CLI 已实现该命令。
+API **4.6.0** has **64 authenticated operations**, all implemented as CLI commands. The tables below retain withdrawn operations for migration context. Anonymous discovery is separate. Use `zenith api operations --output json` and leaf `--help` to inspect the installed build.
 
-| operationId | CLI 命令 | Token 范围 | 效果 |
-| --- | --- | --- | --- |
-| `listOfferingImages` | `zenith offerings images` | `catalog:read` | 已实现；读取规格镜像，分页完整性可能未知。 |
-| `listMyBucketMounts` | `zenith storage bucket-mounts` | `storage:read` | 规划中；HTTP 可列出当前用户授权的项目存储桶挂载（资源区5、资源区10），CLI 不发送请求。 |
-| `getMyInstanceMounts` | `zenith instances mount-info` | `instances:read`、`storage:read` | 规划中；HTTP 可读取自己的开发机内挂载目录，CLI 不发送请求。 |
-| `getMyInstanceMountsById` | `zenith instances mount-info-by-id` | `instances:read`、`storage:read` | 规划中；通过平台实例 ID 读取挂载目录，CLI 不发送请求。 |
-| `listDatasets` | `zenith datasets list` | `datasets:read` | 规划中；HTTP 数据集接口已可用，CLI 不发送请求。 |
-| `getDataset` | `zenith datasets get` | `datasets:read` | 规划中；HTTP 数据集接口已可用，CLI 不发送请求。 |
-| `listDatasetFiles` | `zenith datasets files` | `datasets:read` | 规划中；HTTP 数据集接口已可用，CLI 不发送请求。 |
-| `readDatasetFile` | `zenith datasets read` | `datasets:read` | 规划中；HTTP 数据集接口已可用，CLI 不发送请求。 |
-| `writeDatasetFile` | `zenith datasets write` | `datasets:write` | 规划中；HTTP 数据集接口已可用，CLI 不发送请求。 |
-| `createDatasetDirectory` | `zenith datasets mkdir` | `datasets:write` | 规划中；HTTP 数据集接口已可用，CLI 不发送请求。 |
-| `renameDatasetFile` | `zenith datasets rename` | `datasets:write` | 规划中；HTTP 数据集接口已可用，CLI 不发送请求。 |
-| `deleteDatasetFile` | `zenith datasets delete` | `datasets:write` | 规划中；HTTP 数据集接口已可用，CLI 不发送请求。 |
-| `createDevMachine` | `zenith instances create` | `instances:create` | 规划中；HTTP 可创建并开机，CLI 不发送请求。 |
-| `createTrainingJob` | `zenith jobs create` | `jobs:create` | 规划中；HTTP 可提交训练，CLI 不发送请求。 |
-| `listTrainingJobs` | `zenith jobs list` | `jobs:read` | 规划中；HTTP 可列出本人任务，CLI 不发送请求。 |
-| `getTrainingJob` | `zenith jobs get` | `jobs:read` | 规划中；HTTP 可读取本人任务，CLI 不发送请求。 |
-| `cancelTrainingJob` | `zenith jobs cancel` | `jobs:cancel` + `operations:read` | 已实现；取消本人任务，保留历史、日志与存储。 |
-| `cancelTrainingJobCreation` | `zenith jobs cancel-creation` | `jobs:cancel` + `operations:read` | 已实现；对尚未返回任务 ID 的创建操作持久化取消意图。 |
-| `previewOfferingAdmission` | `zenith offerings admission` | `catalog:read` | 已实现；只读准入预检，不锁卡、不创建资源。 |
-| `getTrainingJobLogs` | `zenith jobs logs` | `jobs:read` | 规划中；HTTP 可读取本人任务日志，CLI 不发送请求。 |
-| `getTrainingMetrics` | `zenith jobs metrics`（规划中） | `jobs:read` |
-| `getTrainingMetricsById` | `zenith jobs metrics-by-id`（规划中） | `jobs:read` |
-| `getTrainingJobReplicas` | `zenith jobs replicas` | `jobs:read` | 规划中；HTTP 可读取本人任务副本诊断，CLI 不发送请求。 |
-| `listMyObjectSources` | `zenith storage sources` | `storage:read` | 已实现；可按项目筛选已授权来源。 |
-| `listMyObjects` | `zenith storage objects` | `storage:read` | 已实现；按来源列出一页相对对象，支持游标。 |
-| `presignMyObjectUpload` | `zenith storage upload-presign` | `storage:write` | 已实现；需 --yes，将上传 URL 写入新建私有文件，不传文件。 |
-| `presignMyObjectDownload` | `zenith storage download-presign` | `storage:read` | 已实现；将下载 URL 写入新建私有文件，不传文件。 |
-| `issueMyBucketSts` | `zenith storage sts` | `storage:read` + `storage:write` + `storage:sts` | 已实现；所选桶或目录的读写授权，需 --yes；凭据写入新建 0600 文件，不输出明文。 |
-| `getDevMachineById` | `zenith instances get-by-id` | `instances:read` | 规划中；HTTP 可按 Platform ID 读取开发机。 |
-| `startDevMachineById` | `zenith instances start-by-id` | `instances:start` | 规划中；HTTP 可按 Platform ID 启动本人开发机。 |
-| `stopDevMachineById` | `zenith instances stop-by-id` | `instances:stop` | 规划中；HTTP 可按 Platform ID 停止本人开发机。 |
-| `restartDevMachineById` | `zenith instances restart-by-id` | `instances:restart` | 规划中；HTTP 可按 Platform ID 重启本人开发机。 |
-| `resizeDevMachineById` | `zenith instances resize-by-id` | `instances:resize` | 规划中；HTTP 可按 Platform ID 改配本人开发机。 |
-| `getMySshAccessById` | `zenith ssh info-by-id` | `ssh:read` | 规划中；HTTP 可按 Platform ID 读取本人 SSH 信息。 |
-| `requestMyPublicKeyInjectionById` | `zenith ssh inject-by-id` | `ssh:inject` | 规划中；HTTP 可按 Platform ID 请求本人公钥补注入。 |
-| `getMyPublicKeyInjectionStatusById` | `zenith ssh injection-status-by-id` | `ssh-keys:read` | 规划中；HTTP 可按 Platform ID 读取注入状态。 |
-| `getTrainingJobById` | `zenith jobs get-by-id` | `jobs:read` | 规划中；HTTP 可按 Platform job ID 读取本人任务。 |
-| `getTrainingJobLogsById` | `zenith jobs logs-by-id` | `jobs:read` | 规划中；HTTP 可按 Platform job ID 读取本人日志。 |
-| `getTrainingJobReplicasById` | `zenith jobs replicas-by-id` | `jobs:read` | 规划中；HTTP 可按 Platform job ID 读取本人副本诊断。 |
-| `cancelTrainingJobById` | `zenith jobs cancel-by-id` | `jobs:cancel` | 规划中；HTTP 可按 Platform job ID 取消本人任务。 |
+| operationId                         | CLI 命令                            | Token 范围                                       | 效果                                                                                  |
+| ----------------------------------- | ----------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| `listOfferingImages`                | `zenith offerings images`           | `catalog:read`                                   | 已实现；读取规格镜像，分页完整性可能未知。                                            |
+| `listMyBucketMounts`                | `zenith storage bucket-mounts`      | `storage:read`                                   | Implemented; Uses the published personal API permissions and exact resource identity. |
+| `getMyInstanceMounts`               | `zenith instances mount-info`       | `instances:read`、`storage:read`                 | Implemented; Uses the published personal API permissions and exact resource identity. |
+| `getMyInstanceMountsById`           | `zenith instances mount-info-by-id` | `instances:read`、`storage:read`                 | Implemented; Uses the published personal API permissions and exact resource identity. |
+| `listDatasets`                      | `zenith datasets list`              | `datasets:read`                                  | Implemented; operates within the authorized dataset.                                  |
+| `getDataset`                        | `zenith datasets get`               | `datasets:read`                                  | Implemented; operates within the authorized dataset.                                  |
+| `listDatasetFiles`                  | `zenith datasets files`             | `datasets:read`                                  | Implemented; operates within the authorized dataset.                                  |
+| `readDatasetFile`                   | `zenith datasets read`              | `datasets:read`                                  | Implemented; operates within the authorized dataset.                                  |
+| `writeDatasetFile`                  | `zenith datasets write`             | `datasets:write`                                 | Implemented; operates within the authorized dataset.                                  |
+| `createDatasetDirectory`            | `zenith datasets mkdir`             | `datasets:write`                                 | Implemented; operates within the authorized dataset.                                  |
+| `renameDatasetFile`                 | `zenith datasets rename`            | `datasets:write`                                 | Implemented; operates within the authorized dataset.                                  |
+| `deleteDatasetFile`                 | `zenith datasets delete`            | `datasets:write`                                 | Implemented; operates within the authorized dataset.                                  |
+| `createDevMachine`                  | `zenith instances create`           | `instances:create`                               | Implemented; Uses the published personal API permissions and exact resource identity. |
+| `createTrainingJob`                 | `zenith jobs create`                | `jobs:create`                                    | Implemented; Uses the published personal API permissions and exact resource identity. |
+| `listTrainingJobs`                  | `zenith jobs list`                  | `jobs:read`                                      | Implemented; Uses the published personal API permissions and exact resource identity. |
+| `getTrainingJob`                    | `zenith jobs get`                   | `jobs:read`                                      | Implemented; Uses the published personal API permissions and exact resource identity. |
+| `cancelTrainingJob`                 | `zenith jobs cancel`                | `jobs:cancel` + `operations:read`                | 已实现；取消本人任务，保留历史、日志与存储。                                          |
+| `cancelTrainingJobCreation`         | `zenith jobs cancel-creation`       | `jobs:cancel` + `operations:read`                | 已实现；对尚未返回任务 ID 的创建操作持久化取消意图。                                  |
+| `previewOfferingAdmission`          | `zenith offerings admission`        | `catalog:read`                                   | 已实现；只读准入预检，不锁卡、不创建资源。                                            |
+| `getTrainingJobLogs`                | `zenith jobs logs`                  | `jobs:read`                                      | Implemented; Uses the published personal API permissions and exact resource identity. |
+| `getTrainingMetrics`                | `zenith jobs metrics`               | `jobs:read`                                      | Implemented; Read bounded replica utilization samples.                                |
+| `getTrainingMetricsById`            | `zenith jobs metrics-by-id`         | `jobs:read`                                      | Implemented; Read bounded utilization samples by Platform job ID.                     |
+| `getTrainingJobReplicas`            | `zenith jobs replicas`              | `jobs:read`                                      | Implemented; Uses the published personal API permissions and exact resource identity. |
+| `listMyObjectSources`               | `zenith storage sources`            | `storage:read`                                   | 已实现；可按项目筛选已授权来源。                                                      |
+| `listMyObjects`                     | `zenith storage objects`            | `storage:read`                                   | 已实现；按来源列出一页相对对象，支持游标。                                            |
+| `presignMyObjectUpload`             | `zenith storage upload-presign`     | `storage:write`                                  | 已实现；需 --yes，将上传 URL 写入新建私有文件，不传文件。                             |
+| `presignMyObjectDownload`           | `zenith storage download-presign`   | `storage:read`                                   | Withdrawn in API 4.0.0; use scoped STS credentials for downloads.                     |
+| `issueMyBucketSts`                  | `zenith storage sts`                | `storage:read` + `storage:write` + `storage:sts` | 已实现；所选桶或目录的读写授权，需 --yes；凭据写入新建 0600 文件，不输出明文。        |
+| `getDevMachineById`                 | `zenith instances get-by-id`        | `instances:read`                                 | Implemented; Uses the published personal API permissions and exact resource identity. |
+| `startDevMachineById`               | `zenith instances start-by-id`      | `instances:start`                                | Implemented; Uses the published personal API permissions and exact resource identity. |
+| `stopDevMachineById`                | `zenith instances stop-by-id`       | `instances:stop`                                 | Implemented; Uses the published personal API permissions and exact resource identity. |
+| `restartDevMachineById`             | `zenith instances restart-by-id`    | `instances:restart`                              | Implemented; Uses the published personal API permissions and exact resource identity. |
+| `resizeDevMachineById`              | `zenith instances resize-by-id`     | `instances:resize`                               | Implemented; Uses the published personal API permissions and exact resource identity. |
+| `getMySshAccessById`                | `zenith ssh info-by-id`             | `ssh:read`                                       | Implemented; Uses the published personal API permissions and exact resource identity. |
+| `requestMyPublicKeyInjectionById`   | `zenith ssh inject-by-id`           | `ssh:inject`                                     | Implemented; Uses the published personal API permissions and exact resource identity. |
+| `getMyPublicKeyInjectionStatusById` | `zenith ssh injection-status-by-id` | `ssh-keys:read`                                  | Implemented; Uses the published personal API permissions and exact resource identity. |
+| `getTrainingJobById`                | `zenith jobs get-by-id`             | `jobs:read`                                      | Implemented; Uses the published personal API permissions and exact resource identity. |
+| `getTrainingJobLogsById`            | `zenith jobs logs-by-id`            | `jobs:read`                                      | Implemented; Uses the published personal API permissions and exact resource identity. |
+| `getTrainingJobReplicasById`        | `zenith jobs replicas-by-id`        | `jobs:read`                                      | Implemented; Uses the published personal API permissions and exact resource identity. |
+| `cancelTrainingJobById`             | `zenith jobs cancel-by-id`          | `jobs:cancel`                                    | Implemented; Uses the published personal API permissions and exact resource identity. |
 
-取消命令的最小范围为 `jobs:cancel` + `operations:read`；另授予 `jobs:read` 才能通过[个人 API](/reference/personal-api)查询任务实际状态。当前 `jobs get` 尚未实现。`--wait` 只等取消回执，不能证明训练已经停止。
+取消命令的最小范围为 `jobs:cancel` + `operations:read`；另授予 `jobs:read` 才能通过[个人 API](/reference/personal-api)查询任务实际状态。Use `jobs get` or `jobs get-by-id` to inspect the resulting task state. `--wait` 只等取消回执，不能证明训练已经停止。
 
 ### 单独的匿名文档发现
 
-`capabilities` 始终需要有效个人 Token。匿名发现仅指 OpenAPI 文档和站点维护状态，不计入上述 65 项：
+`capabilities` 始终需要有效个人 Token。匿名发现仅指 OpenAPI 文档和站点维护状态，不计入上述 64 项：
 
 ```bash
 zenith api schema --output json
@@ -292,21 +292,18 @@ zenith operations wait "$OPERATION_ID" --timeout-ms 120000 --output json
 
 确认操作已处于 `SUCCEEDED` 或 `FAILED` 且无需恢复后，才可以 `operations forget --intent NAME` 清理本地记录。清理不会删除远端资源，但再次使用同名 intent 会生成新键，可能再次执行。取消任务同样需要新的专用 intent，并且只允许取消本人任务。
 
-## 当前范围和明确未实现项
+## Current scope
 
-API 2.14.0 has 50 authenticated operations: 32 have CLI bindings and 18 are planned. The planned
-bindings are instance creation; job creation/list/detail/logs/replicas;
-eight Platform instance-ID aliases; and four Platform job-ID aliases. Generated HTTP types do not
-make these CLI commands available. Existing instance, SSH and job-cancellation commands still
-use vendor/provider coordinates. Alias commands return `NOT_IMPLEMENTED` without a request.
+All 64 authenticated operations in API 4.6.0 have CLI commands. Original instance, SSH and job
+commands use vendor/provider coordinates; their `*-by-id` variants use exact Platform ledger IDs.
+Creation, dataset files, storage preferences, bucket mounts and training diagnostics are supported.
+The operation inventory is verified against executable tests for every command.
 
-Instance deletion, raw jobs/logs routes, arbitrary files or migration, administrator and token
-management, browser terminals, raw vendor APIs and manual mounts remain outside this CLI preview.
-Follow [CLI Epic #50](https://github.com/bjzgcai/Zenith/issues/50) for staged expansion. Use an
-authorized console entry or the documented personal HTTP contract; do not construct private routes.
+Instance deletion, arbitrary host files and migrations, administration, token management,
+browser terminals, raw vendor APIs and console-only mount changes remain outside the personal API.
+Do not construct private routes to bypass these boundaries.
 
 完整命令表、权限范围、退出码和契约细节见[个人 API 与 AI 接入](/reference/personal-api)；安装、归档内容、回滚和 Skills 主机路径见仓库的 [CLI 安装说明](https://github.com/bjzgcai/Zenith/blob/main/cli/INSTALL.md) 和 [Skills 安装说明](https://github.com/bjzgcai/Zenith/blob/main/skills/INSTALL.md)。
-
 
 ## 查看我的项目并申请存储凭据
 
@@ -325,3 +322,49 @@ Token 需 `projects:read` 读取我的项目，`storage sts` 签发临时凭据�
 立即撤销已签发云凭据。签发不会自动重试。
 
 API 4.5.0 增加天翼 ZOS 临时凭据接入，需管理员完成对应账号、角色和地域的实际权限验证后启用；未启用时返回 503，请勿自动重试或改用长期密钥。使用返回的真实 endpoint 和 region，旧桶保留原地域，新存储优先华北 2。项目桶登记不代表已挂载到开发机。
+
+## Create and inspect workloads
+
+Creation uses a UTF-8 JSON object from a regular file (at most 1 MiB). Use the exact request schema from `api schema`; every current field is supported, including resource zones, storage modes, initial mount aliases, ports, startup commands, training replicas and descriptions. Unknown fields or invalid values fail before dispatch. Specifications can contain private workload data; keep them local.
+
+```sh
+zenith instances create "$OFFERING_ID" --file machine.json --yes --intent create-machine-01 --wait --output json
+zenith jobs create "$OFFERING_ID" --file job.json --yes --intent create-job-01 --wait --output json
+zenith jobs list --project-id "$PROJECT_ID" --page 1 --page-size 50 --output json
+zenith jobs get-by-id "$PLATFORM_JOB_ID" --output json
+zenith jobs logs-by-id "$PLATFORM_JOB_ID" --log-num 100 --output json
+zenith jobs replicas-by-id "$PLATFORM_JOB_ID" --page 1 --page-size 50 --output json
+zenith jobs metrics-by-id "$PLATFORM_JOB_ID" --minutes 60 --output json
+```
+
+A minimal machine specification is `{"name":"research"}`; a minimal job specification is `{"name":"training","entrypoint":"python train.py"}`. Platform selects permitted defaults and still enforces current admission and funding. Creation requires `instances:create` or `jobs:create` plus `operations:read`. `--wait` waits for the operation receipt, not workload readiness or training completion. Retain the exact spec, offering ID and intent after timeout or interruption. Repeating them recovers the original operation; changing the spec with the same intent fails. The journal stores only a request hash and safe identities, never the specification or file content.
+
+Job list, replicas, logs and metrics return bounded responses; use the explicit pagination, cursor, replica and time-window options in leaf help. Output preserves null diagnostics, truncation and pending indicators. Original job detail/diagnostic commands accept `VENDOR JOB_ID`; `*-by-id` accepts the Platform job ledger ID.
+
+## Datasets and storage preferences
+
+```sh
+zenith datasets list --resource-zone 5 --page 1 --page-size 50 --output json
+zenith datasets get "$DATASET_ID" --output json
+zenith datasets files "$DATASET_ID" --output json
+zenith datasets read "$DATASET_ID" --path README.txt --output json
+zenith datasets write "$DATASET_ID" --path config.json --file config.json --yes --output json
+zenith datasets mkdir "$DATASET_ID" --path results --yes --output json
+zenith datasets rename "$DATASET_ID" results outputs --yes --output json
+zenith datasets delete "$DATASET_ID" --path outputs --yes --output json
+zenith storage bucket-mounts --output json
+zenith instances mount-info-by-id "$PLATFORM_INSTANCE_ID" --output json
+zenith projects storage-paths "$PROJECT_ID" --output json
+zenith projects set-storage-path "$PROJECT_ID" --body-file preference.json --yes --output json
+```
+
+Dataset reads return the API's base64 file content and metadata in the output envelope. Writes read bounded local bytes and encode them as base64; mutation flags require `--yes` and no dataset mutation is retried or journaled. `--recursive` explicitly enables recursive deletion. Dataset scope and paths remain server-authorized, not arbitrary host filesystem access.
+
+A preference file contains either `{"binding_id":"<binding-id>","mount_path":null}` to reset a legacy path or `{"binding_id":"<binding-id>","mount_aliases":[{"mount_path":"/research","directory":null}]}` for explicit aliases. It must match one complete schema form. Preferences affect future workload mounts; these commands do not remount a running machine. Existing manual mount administration remains outside the personal API.
+
+## Placement selectors
+
+`offerings images OFFERING_ID --resource-zone ZONE` restricts image discovery to one storage
+zone. `offerings admission OFFERING_ID --workload instance --vendor VENDOR --storage-mode MODE`
+forwards explicit placement constraints. Storage modes are `auto`, `personal`, `without_personal`
+and `without_personal_project`. Admission is advisory and creates no reservation.
