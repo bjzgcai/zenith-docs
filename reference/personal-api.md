@@ -344,7 +344,7 @@ curl --fail-with-body -X POST \
 示例使用资源区5（`vendor` 为 `volcengine`）并选择个人和公共存储，需所属组织已经授予这些资源。`name` 是必填的平台显示名称，支持 1–128 个 Unicode 字符，包括中文、标点和末尾空格；不允许开头空白、控制字符或无效 Unicode。平台原样保存名称，并为新资源生成独立的 16 位云端名称，仅含小写英文字母和数字。操作仍使用厂商和资源 ID，已有资源保留原名称。
 
 - `execution_class`：`standard` 为一般，`low_priority` 为低优；先查看所选规格和资源区的 `capabilities_by_resource_zone` 中 `instance_execution_classes`，提交时仍会核验当前资格与路由。
-- `project_id`：可选，必须是自己加入的有效项目。项目开发机先扣项目卡时，用尽后自动接着扣个人卡时。
+- `project_id`：可选，必须是自己加入的有效项目。项目开发机先扣项目卡时，用尽后自动接着扣个人卡时。使用项目专属 8 卡开发机时还必须选择已获授权的项目，且 `execution_class` 只能为 `standard`；开机、重启和重建会重新核验授权。
 - `image_id`：可选，使用镜像接口返回的值，并选择对应的 `vendor`。
 - `ports`：可选，最多 5 条自定义 TCP 端口（资源区10 常规创建含 SSH，最多 4 条）。每项包含 `name`、`container_port`，以及可选 `external_port`；`protocol` 仅支持 `tcp`，`enable_public_network_access` 默认为 `false`。名称、容器端口和显式外部端口均不能重复。
 - 存储默认按照所属用户、项目和资源区自动配置；可通过初始挂载开关及已授权的平台挂载盘 ID 选择，不接受原始云端 ID 或自定义路径。
@@ -354,6 +354,18 @@ curl --fail-with-body -X POST \
 创建会开机并按平台规则计费，仍受组织最大卡数、规格分配、卡时、存储配额和队列限制。存储按平台配置自动挂载；所有手动挂载操作仅平台管理员可在控制台执行。
 
 首次受理返回 `202` 和 `operation_id`，每 5 秒查询操作结果。成功后结果包含 `vendor`、`vendor_instance_id` 和 `instance_url`，继续查询开发机，确认 `RUNNING` 后再获取 SSH 信息。重复请求保留原幂等键，不会再创建一台。若状态为 `UNKNOWN`，先等待核实；持续未恢复时联系平台管理员处理，不能换新键反复创建。
+
+### 项目专属规格与 8 卡开发机（API 4.7.0 / 4.8.0）
+
+`GET /pt/api2/compute-offerings` 支持可选参数 `project_id`，用于读取某个已加入活跃项目可用的规格；它不能与 `scope=organization` 同时使用。返回的每个规格包含以下新增字段：
+
+- `project_ids`：当前账号可见的项目授权；
+- `project_development_enabled`：所选项目是否获准使用 8 卡开发机；
+- `project_exclusive`：规格是否为项目独占。
+
+项目授权默认是**追加**权限：所选项目可以使用规格，组织原本分配的训练和开发机权限继续有效。`project_exclusive=true` 表示规格只对绑定项目开放，此时即使管理员创建任务也必须选择绑定项目。旧版本平台可能省略 `project_exclusive`，非空的项目绑定仍按项目独占理解。
+
+8 卡开发机授权只对所选项目的有效成员生效，可以豁免组织常规的 1/2 卡规格限制；个人与项目配额、卡时、存储、队列用途和容量检查仍然适用。项目授权不预留物理节点，也不产生预付租期。CLI 对应命令为 `zenith offerings list --project-id ID`。
 
 ## 创建与提交训练任务
 
@@ -596,7 +608,7 @@ API **2.11.0** 的 `GET /pt/api2/ai/capabilities` 返回 `resource_zones` 目录
 
 ## 提交前预检与取消任务
 
-当前契约版本为 **3.18.0**。开发机、训练任务和准入预检只接受 `standard`（一般）或
+当前契约版本为 **4.8.0**。开发机、训练任务和准入预检只接受 `standard`（一般）或
 `low_priority`（低优），旧输入 `normal` 返回 400，不做转换；省略仍默认 `standard`。`resource_zone`
 为字符串 `1`–`6` 或 `10`，不能与显式指定的 `vendor` 冲突（`1`–`4` 对应 `ctyun`，`5` 对应 `volcengine`，`6` 对应 `lanqi`，`10` 对应 `baidu`）；训练 `replicas` 为 1–256。Capabilities
 的 `api_version` 和 `schema_sha256` 对应当前 OpenAPI，升级客户端时应同步契约。

@@ -64,9 +64,12 @@ zenith quota show --output json
 zenith card-hours show --output json
 zenith projects list --output json
 zenith offerings list --output json
+zenith offerings list --project-id "$PROJECT_ID" --output json
 zenith offerings images "$OFFERING_ID" --workload DEV_INSTANCE --output json
 zenith instances list --all --output json
 ```
+
+`offerings list --project-id ID` 按某个已加入的活跃项目读取规格，适合确认项目专属规格和 8 卡开发机授权；它不能与 `--scope organization` 同时使用。返回的 `project_ids` 是当前账号可见的项目授权，`project_development_enabled=true` 表示该项目已获准使用 8 卡开发机。旧版本平台可能不返回这些新增字段，缺失时应按未知处理，不能当作已授权。项目授权本身不预留容量或预付时段，个人与项目配额、卡时和队列准入仍会检查。
 
 从结果中选择并设置后续示例的 `PROJECT_ID`、`OFFERING_ID`、`VENDOR` 和 `PROVIDER_ID`。开发机目标使用同一行的 `vendor` 与 `vendor_instance_id`，不能用显示名称或 Platform 内部 `id` 代替 provider ID。`--scope projects` 可显式读取本人及已加入项目可见的机器，但不增加操作或 SSH 权限；开发机操作和 SSH 仍限本人所有。
 
@@ -181,7 +184,7 @@ zenith instances resize "$VENDOR" "$PROVIDER_ID" \
 
 ### Current personal API coverage
 
-API **4.6.0** has **64 authenticated operations**, all implemented as CLI commands. The tables below retain withdrawn operations for migration context. Anonymous discovery is separate. Use `zenith api operations --output json` and leaf `--help` to inspect the installed build.
+API **4.8.0** has **64 authenticated operations**, all implemented as CLI commands. The tables below retain withdrawn operations for migration context. Anonymous discovery is separate. Use `zenith api operations --output json` and leaf `--help` to inspect the installed build.
 
 | operationId                         | CLI 命令                            | Token 范围                                       | 效果                                                                                  |
 | ----------------------------------- | ----------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------- |
@@ -294,7 +297,7 @@ zenith operations wait "$OPERATION_ID" --timeout-ms 120000 --output json
 
 ## Current scope
 
-All 64 authenticated operations in API 4.6.0 have CLI commands. Original instance, SSH and job
+All 64 authenticated operations in API 4.8.0 have CLI commands. Original instance, SSH and job
 commands use vendor/provider coordinates; their `*-by-id` variants use exact Platform ledger IDs.
 Creation, dataset files, storage preferences, bucket mounts and training diagnostics are supported.
 The operation inventory is verified against executable tests for every command.
