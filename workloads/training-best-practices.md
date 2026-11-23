@@ -55,7 +55,7 @@ python /personal_fast_storage/my-project/train.py \
 python train.py --resume_from /personal_fast_storage/my-project/outputs/checkpoint-latest
 ```
 
-低优任务被抢占后，平台会自动重新排队并重新执行原命令，但不会自动从上次进度恢复。程序必须自己检测已有检查点并继续训练。
+低优任务被回收后结束。请手动提交新任务，并让训练程序加载已保存的检查点。
 
 ### 把日志写入持久存储
 
@@ -116,7 +116,7 @@ python train.py --log_dir /personal_fast_storage/my-project/logs 2>&1 | tee /per
 | 检查点要求 | 建议保存               | 必须保存到持久存储               |
 
 ::: warning 低优任务没有恢复保证
-低优任务被停止后，平台会按原 GPU 申请数重新排队，但**不会自动从上次进度恢复**。训练程序必须自己从检查点继续。
+低优任务被回收后结束。如需继续，请用原检查点重新提交训练。
 :::
 
 ## 分布式训练选择
